@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
+import router from "@/router";
 
-export const useUserStore = defineStore('user', {
+export const useUserStore = defineStore('manager', {
     state: () => ({
         managerInfo: {}   // {  user: {}, token: '' }
     })  ,
@@ -24,7 +25,12 @@ export const useUserStore = defineStore('user', {
         },
         setUser(user) {
             this.managerInfo.user = JSON.parse(JSON.stringify(user)) //用JSON这个User，跟内存中的user分离，可以避免修改的同步
-        }
+        },
+            logout(){
+                localStorage.removeItem('manager')
+                router.push('/login')
+
+            }
     },
     // pinia开启数据持久化
     // pinia是缓存到内存里的，没有缓存到浏览器，只有持久化才可以缓存到浏览器里

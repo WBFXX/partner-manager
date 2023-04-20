@@ -4,7 +4,7 @@ import {
   RefreshLeft,
   Plus, Bottom, Top, Remove
 } from '@element-plus/icons-vue'
-import {reactive, ref} from "vue";
+import {nextTick, reactive, ref} from "vue";
 import request from "@/utils/request";
 
 import {ElMessage} from "element-plus";
@@ -12,7 +12,6 @@ import config from "../../config";
 import {useUserStore} from "@/stores/user";
 
 const name = ref('')
-const address = ref('')
 const state = reactive({
   tableData: [],
   form: {}
@@ -32,7 +31,7 @@ const confirmDelBatch = () =>{
     return
   }
   const idArr = multipleSelection.value.map(v => v.id)
-  request.post('/user/del/batch',idArr).then(res => {
+  request.post('/dynamic/del/batch',idArr).then(res => {
     if (res.code === '200') {
       ElMessage.success("操作成功")
       load() //刷新表格数据
@@ -47,10 +46,9 @@ const pageSize = ref(10)
 const total = ref(0)
 
 const load = () => {
-  request.get('/user/page', {
+  request.get('/dynamic/page', {
     params: {
       name: name.value,
-      address: address.value,
       pageNum: pageNum.value,
       pageSize: pageSize.value,
 
@@ -64,7 +62,6 @@ load()//调用load方法拿到数据
 
 const reset = () => {
   name.value = ''
-  address.value = ''
   load()
 
 }
@@ -83,33 +80,26 @@ const dialogFormVisible = ref(false)
 
 
 const ruleFormRef = ref()
+//新增
 const handleAdd = () => {
   dialogFormVisible.value = true
-  ruleFormRef.value.resetFields()
-  state.form = {}
+  nextTick(() => {
+    ruleFormRef.value.resetFields()
+    state.form = {}
+  })
 }
 const rules = reactive({
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度在3到20位之间', trigger: 'blur' },
-  ],
+
   name: [
     { required: true, message: '请输入名称', trigger: 'blur' },
-  ],
-  email: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '请输入正确邮箱', trigger: 'blur' },
-  ],
-  address: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    //{ min: 3, max: 20, message: '请输入正确邮箱', trigger: 'blur' },
   ]
 })
+//保存
 const save = () => {
   ruleFormRef.value.validate(valid => {
     if (valid) {//valid就是检验的结果
       request.request({
-        url: '/user',
+        url: '/dynamic',
         method: state.form.id ? 'put' : 'post',//根据id进行判断请求哪个接口
         data: state.form
       }).then(res => {
@@ -126,15 +116,16 @@ const save = () => {
 }
 //编辑
 const handleEdit = (raw) => {
-  state.form = JSON.parse(JSON.stringify(raw));
   dialogFormVisible.value=true
-  ruleFormRef.value.resetFields()
-
+  nextTick(() => {
+    ruleFormRef.value.resetFields()
+    state.form = JSON.parse(JSON.stringify(raw));
+  })
 
 }
 //删除
 const del = (id) => {
-  request.delete('/user/'+ id).then(res => {
+  request.delete('/dynamic/'+ id).then(res => {
         if (res.code === '200') {
           ElMessage.success("操作成功")
           load() //刷新表格数据
@@ -146,7 +137,7 @@ const del = (id) => {
 }
 // 导出
 const exportData = () => {
-  window.open(`http://${config.serverUrl}/user/export`)
+  window.open(`http://${config.serverUrl}/dynamic/export`)
 }
 
 
@@ -166,8 +157,6 @@ const handleImportSuccess = () => {
     <!--搜索-->
     <div>
       <el-input v-model="name" placeholder="请输入名称" style="width: 300px "/>
-      <el-input v-model="address" placeholder="请输入地址" style="width: 300px;margin-left: 5px"/>
-
       <el-button type="primary" style="margin-left: 5px" @click="load">
         <el-icon style="vertical-align: middle">
           <Search/>
@@ -193,7 +182,7 @@ const handleImportSuccess = () => {
       <el-upload
           :show-file-list="false"
           style="display: inline-block;position: relative;top: 3px;margin: 5px"
-          :action='`http://${config.serverUrl}/user/import`'
+          :action='`http://${config.serverUrl}/dynamic/import`'
           :on-success="handleImportSuccess"
           :headers="{ Authorization: token }"
       >
@@ -230,10 +219,15 @@ const handleImportSuccess = () => {
     <div style="margin: 10px 0">
       <el-table :data="state.tableData" stripe border @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55"/>
-        <el-table-column prop="username" label="用户名"></el-table-column>
-        <el-table-column prop="name" label="名称"></el-table-column>
-        <el-table-column prop="address" label="地址"></el-table-column>
-        <el-table-column prop="email" label="邮箱"></el-table-column>
+
+            <el-table-column prop="id" label="编号"></el-table-column>
+            <el-table-column prop="name" label="标题"></el-table-column>
+            <el-table-column prop="content" label="内容"></el-table-column>
+            <el-table-column prop="imgs" label="图片"></el-table-column>
+            <el-table-column prop="description" label="简介"></el-table-column>
+            <el-table-column prop="uid" label="用户标识"></el-table-column>
+
+
         <el-table-column label="操作" width="180">
           <template #default="scope">
             <el-button type="primary" @click="handleEdit(scope.row)">编辑</el-button>
@@ -262,21 +256,25 @@ const handleImportSuccess = () => {
       />
     </div>
     <!--弹窗-->
-      <el-dialog v-model="dialogFormVisible" title="用户信息" width="40%">
+      <el-dialog v-model="dialogFormVisible" title="信息" width="40%">
         <el-form :model="state.form" label-width="80px" style="padding: 0 20px"
                  ref="ruleFormRef"
-                 :rules="rules">
-          <el-form-item prop="username" label="用户名" >
-            <el-input v-model="state.form.username" autocomplete="off"/>
+                 :rules="rules" status-icon>
+
+          <el-form-item prop="name" label="标题" >
+                      <el-input v-model="state.form.name" autocomplete="off"/>
           </el-form-item>
-          <el-form-item prop="name" label="名称" >
-            <el-input v-model="state.form.name" autocomplete="off"/>
+          <el-form-item prop="content" label="内容" >
+                      <el-input v-model="state.form.content" autocomplete="off"/>
           </el-form-item>
-          <el-form-item prop="email" label="邮箱">
-            <el-input v-model="state.form.email" autocomplete="off"/>
+          <el-form-item prop="imgs" label="图片" >
+                      <el-input v-model="state.form.imgs" autocomplete="off"/>
           </el-form-item>
-          <el-form-item prop="address" label="地址">
-            <el-input type="textarea" v-model="state.form.address" autocomplete="off"/>
+          <el-form-item prop="description" label="简介" >
+                      <el-input v-model="state.form.description" autocomplete="off"/>
+          </el-form-item>
+          <el-form-item prop="uid" label="用户标识" >
+                      <el-input v-model="state.form.uid" autocomplete="off"/>
           </el-form-item>
 
         </el-form>

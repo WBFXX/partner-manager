@@ -59,7 +59,8 @@ const logout = () => {
     <div style="display: flex">
       <div style="width: 200px;min-height: calc(100vh - 60px);border-right: 1px solid #ccc">
         <el-menu
-            default-active="/home"
+            router
+            default-active="/"
             class="el-menu-vertical-demo"
 
         >
@@ -70,7 +71,9 @@ const logout = () => {
               </el-icon>
               <span>Navigator One</span>
             </template>
-            <el-menu-item index="/home">item one</el-menu-item>
+            <el-menu-item index="/user">用户</el-menu-item>
+            <el-menu-item index="/role">角色</el-menu-item>
+            <el-menu-item index="/permission">权限</el-menu-item>
           </el-sub-menu>
           <el-menu-item index="2">
             <el-icon>

@@ -13,6 +13,8 @@ import {useUserStore} from "@/stores/user";
 
 const name = ref('')
 const address = ref('')
+const roles = ref([])
+
 const state = reactive({
   tableData: [],
   form: {}
@@ -25,14 +27,14 @@ const handleSelectionChange = (val) => {
   multipleSelection.value = val
 }
 // 批量删除
-const confirmDelBatch = () =>{
+const confirmDelBatch = () => {
   //当value为0或者长度为0
-  if (!multipleSelection.value || !multipleSelection.value.length ){
+  if (!multipleSelection.value || !multipleSelection.value.length) {
     ElMessage.warning("请选择数据")
     return
   }
   const idArr = multipleSelection.value.map(v => v.id)
-  request.post('/user/del/batch',idArr).then(res => {
+  request.post('/user/del/batch', idArr).then(res => {
     if (res.code === '200') {
       ElMessage.success("操作成功")
       load() //刷新表格数据
@@ -59,6 +61,11 @@ const load = () => {
     state.tableData = res.data.records
     total.value = res.data.total
   })
+
+  request.get('/role').then(res => {
+    roles.value = res.data
+  })
+
 }
 load()//调用load方法拿到数据
 
@@ -81,7 +88,6 @@ const sizeChange = (size) => {
 const dialogFormVisible = ref(false)
 
 
-
 const ruleFormRef = ref()
 const handleAdd = () => {
   dialogFormVisible.value = true
@@ -92,19 +98,22 @@ const handleAdd = () => {
 }
 const rules = reactive({
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度在3到20位之间', trigger: 'blur' },
+    {required: true, message: '请输入用户名', trigger: 'blur'},
+    {min: 3, max: 20, message: '用户名长度在3到20位之间', trigger: 'blur'},
   ],
   name: [
-    { required: true, message: '请输入名称', trigger: 'blur' },
+    {required: true, message: '请输入名称', trigger: 'blur'},
   ],
   email: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '请输入正确邮箱', trigger: 'blur' },
+    {required: true, message: '请输入用户名', trigger: 'blur'},
+    {min: 3, max: 20, message: '请输入正确邮箱', trigger: 'blur'},
   ],
   address: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
+    {required: true, message: '请输入用户名', trigger: 'blur'},
     //{ min: 3, max: 20, message: '请输入正确邮箱', trigger: 'blur' },
+  ],
+  role:[
+    {required:true,message:'请选择角色',trigger:'blur'}
   ]
 })
 const save = () => {
@@ -128,7 +137,7 @@ const save = () => {
 }
 //编辑
 const handleEdit = (raw) => {
-  dialogFormVisible.value=true
+  dialogFormVisible.value = true
   nextTick(() => {
     ruleFormRef.value.resetFields()
     state.form = JSON.parse(JSON.stringify(raw));
@@ -137,7 +146,7 @@ const handleEdit = (raw) => {
 }
 //删除
 const del = (id) => {
-  request.delete('/user/'+ id).then(res => {
+  request.delete('/user/' + id).then(res => {
         if (res.code === '200') {
           ElMessage.success("操作成功")
           load() //刷新表格数据
@@ -162,6 +171,7 @@ const handleImportSuccess = () => {
   ElMessage.success("导入成功")
 }
 
+
 </script>
 
 <template>
@@ -183,11 +193,11 @@ const handleImportSuccess = () => {
         </el-icon>
         <span style="vertical-align: middle">重置</span>
       </el-button>
-<!--数据新增导入导出删除操作-->
+      <!--数据新增导入导出删除操作-->
     </div>
 
     <div style="margin: 10px 0">
-      <el-button type="success"  @click="handleAdd">
+      <el-button type="success" @click="handleAdd">
         <el-icon>
           <Plus/>
         </el-icon>
@@ -200,7 +210,7 @@ const handleImportSuccess = () => {
           :on-success="handleImportSuccess"
           :headers="{ Authorization: token }"
       >
-        <el-button type="primary"  >
+        <el-button type="primary">
           <el-icon>
             <Bottom/>
           </el-icon>
@@ -209,8 +219,7 @@ const handleImportSuccess = () => {
       </el-upload>
 
 
-
-      <el-button type="primary"  @click="exportData">
+      <el-button type="primary" @click="exportData">
         <el-icon>
           <Top/>
         </el-icon>
@@ -237,6 +246,7 @@ const handleImportSuccess = () => {
         <el-table-column prop="name" label="名称"></el-table-column>
         <el-table-column prop="address" label="地址"></el-table-column>
         <el-table-column prop="email" label="邮箱"></el-table-column>
+        <el-table-column prop="role" label="角色"></el-table-column>
         <el-table-column label="操作" width="180">
           <template #default="scope">
             <el-button type="primary" @click="handleEdit(scope.row)">编辑</el-button>
@@ -265,32 +275,39 @@ const handleImportSuccess = () => {
       />
     </div>
     <!--弹窗-->
-      <el-dialog v-model="dialogFormVisible" title="用户信息" width="40%">
-        <el-form :model="state.form" label-width="80px" style="padding: 0 20px"
-                 ref="ruleFormRef"
-                 :rules="rules" status-icon>
-          <el-form-item prop="username" label="用户名" >
-            <el-input v-model="state.form.username" autocomplete="off"/>
-          </el-form-item>
-          <el-form-item prop="name" label="名称" >
-            <el-input v-model="state.form.name" autocomplete="off"/>
-          </el-form-item>
-          <el-form-item prop="email" label="邮箱">
-            <el-input v-model="state.form.email" autocomplete="off"/>
-          </el-form-item>
-          <el-form-item prop="address" label="地址">
-            <el-input type="textarea" v-model="state.form.address" autocomplete="off"/>
-          </el-form-item>
+    <el-dialog v-model="dialogFormVisible" title="用户信息" width="40%">
+      <el-form :model="state.form" label-width="80px" style="padding: 0 20px"
+               ref="ruleFormRef"
+               :rules="rules" status-icon>
+        <el-form-item prop="username" label="用户名">
+          <el-input v-model="state.form.username" autocomplete="off"/>
+        </el-form-item>
+        <el-form-item prop="name" label="名称">
+          <el-input v-model="state.form.name" autocomplete="off"/>
+        </el-form-item>
+        <el-form-item prop="role" label="角色" >
+          <el-select v-model="state.form.role" style="width: 100%;">
+            <el-option v-for="item in roles" :label="item.name" :value="item.flag" :key="item.id">
 
-        </el-form>
-        <template #footer>
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item prop="email" label="邮箱">
+          <el-input v-model="state.form.email" autocomplete="off"/>
+        </el-form-item>
+        <el-form-item prop="address" label="地址">
+          <el-input type="textarea" v-model="state.form.address" autocomplete="off"/>
+        </el-form-item>
+
+      </el-form>
+      <template #footer>
       <span class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取消</el-button>
         <el-button type="primary" @click="save">
           保存
         </el-button>
       </span>
-        </template>
-      </el-dialog>
+      </template>
+    </el-dialog>
   </div>
 </template>

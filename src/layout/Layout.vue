@@ -69,29 +69,29 @@ const logout = () => {
               <el-icon>
                 <location/>
               </el-icon>
-              <span>Navigator One</span>
+              <span>系统管理</span>
             </template>
-            <el-menu-item index="/user">用户</el-menu-item>
-            <el-menu-item index="/role">角色</el-menu-item>
-            <el-menu-item index="/permission">权限</el-menu-item>
+            <el-menu-item index="/user">用户管理</el-menu-item>
+            <el-menu-item index="/role">角色管理</el-menu-item>
+            <el-menu-item index="/permission">权限管理</el-menu-item>
           </el-sub-menu>
           <el-menu-item index="2">
             <el-icon>
               <icon-menu/>
             </el-icon>
-            <span>Navigator Two</span>
+            <span>abcd</span>
           </el-menu-item>
           <el-menu-item index="3" disabled>
             <el-icon>
               <document/>
             </el-icon>
-            <span>Navigator Three</span>
+            <span>abcd</span>
           </el-menu-item>
           <el-menu-item index="4">
             <el-icon>
               <setting/>
             </el-icon>
-            <span>Navigator Four</span>
+            <span>abcd</span>
           </el-menu-item>
         </el-menu>
       </div>

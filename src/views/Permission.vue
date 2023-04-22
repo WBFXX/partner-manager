@@ -52,11 +52,11 @@ const load = () => {
 }
 load()//调用load方法拿到数据
 
-const reset = () => {
-  name.value = ''
-  load()
-
-}
+// const reset = () => {
+//   name.value = ''
+//   load()
+//
+// }
 
 const currentChange = (num) => {
   pageNum.value = num
@@ -110,14 +110,25 @@ const save = () => {
 }
 //编辑
 const handleEdit = (raw) => {
-  dialogFormVisible.value=true
+  dialogFormVisible.value = true
   nextTick(() => {
     ruleFormRef.value.resetFields()
     state.form = JSON.parse(JSON.stringify(raw));
+    // getTreeArr(raw)
   })
-
-
 }
+// const getTreeArr = (raw) => {
+//   //从数组里面删除
+//   state.tree=JSON.parse(JSON.stringify(state.tableData))
+//   if (raw){//raw不存在就是新增的时候没有数据
+//     let index = state.tree.findIndex(v => v.id === raw.id)
+//     state.tree.splice(index,1)
+//
+//   }
+// }
+
+
+
 //删除
 const del = (id) => {
   request.delete('/permission/'+ id).then(res => {
@@ -148,6 +159,35 @@ const handleImportSuccess = () => {
 //权限树状数据
 const options = ref([])
 const icons = ref([])
+
+const handleNodeClick = (data) => {
+
+  if (data.id >= state.form.id) {  // 当前编辑行的id跟选择的父节点的id如果相同的话，就不让他选择
+    console.log(data)
+    ElMessage.warning('节点选择错误，请选择非自身节点或父节点')
+
+    nextTick(() => {  // 等树节点的dom渲染完之后再去修改pid
+      // 重置pid
+      state.form.pid = null
+      console.log(state.form)
+    })
+  }
+}
+//是否隐藏按钮
+const changeHide = (row) => {
+  request.request({
+    url: '/permission',
+    method: 'put',//根据id进行判断请求哪个接口
+    data: row
+  }).then(res => {
+    if (res.code === '200') {
+      ElMessage.success("操作成功")
+      load() //刷新表格数据
+    } else {
+      ElMessage.error(res.msg)
+    }
+  })
+}
 </script>
 
 <template>
@@ -233,6 +273,11 @@ const icons = ref([])
                 <el-tag type="success" v-if="scope.row.type === 3"> 菜单按钮 </el-tag>
               </template>
             </el-table-column>
+            <el-table-column prop="auth" label="隐藏">
+              <template #default="scope">
+                <el-switch v-model="scope.row.hide" @change="changeHide(scope.row)"></el-switch>
+              </template>
+            </el-table-column>
 
 
 
@@ -254,14 +299,21 @@ const icons = ref([])
 
     <!--弹窗-->
       <el-dialog v-model="dialogFormVisible" title="信息" width="40%">
+
         <el-form :model="state.form" label-width="80px" style="padding: 0 20px"
                  ref="ruleFormRef"
                  :rules="rules" status-icon>
-
+          <el-form-item prop="pid" label="类型" >
+            <el-radio-group v-model="state.form.type">
+              <el-radio :label="1">菜单目录</el-radio>
+              <el-radio :label="2">菜单页面</el-radio>
+              <el-radio :label="3">菜单按钮</el-radio>
+            </el-radio-group>
+          </el-form-item>
           <el-form-item prop="name" label="名称" >
                       <el-input v-model="state.form.name" autocomplete="off"/>
           </el-form-item>
-          <el-form-item prop="path" label="访问路径" v-if="state.form.type === 1 || state.form.type === 2">
+          <el-form-item prop="path" label="访问路径" v-if="state.form.type === 2">
                       <el-input v-model="state.form.path" autocomplete="off" />
           </el-form-item>
           <el-form-item prop="page" label="页面路径" v-if="state.form.type === 2">
@@ -285,22 +337,11 @@ const icons = ref([])
                       <el-input v-model="state.form.auth" autocomplete="off" />
           </el-form-item>
           <el-form-item prop="pid" label="父级菜单" >
-            <el-select v-model="state.form.pid"  placeholder="请选择" style="width: 100%">
-              <el-option
-                  v-for="item in options"
-                  :key="item"
-                  :label="item"
-                  :value="item"
-              />
-            </el-select>
+            <el-tree-select style="width: 100%" v-model="state.form.pid" :data="state.tableData"
+                            @node-click="handleNodeClick"
+                            :props="{ label: 'name', value: 'id' }" :render-after-expand="false" check-strictly />
           </el-form-item>
-          <el-form-item prop="pid" label="类型" >
-            <el-radio-group v-model="state.form.type">
-              <el-radio :label="1">菜单目录</el-radio>
-              <el-radio :label="2">菜单页面</el-radio>
-              <el-radio :label="3">页面按钮</el-radio>
-            </el-radio-group>
-          </el-form-item>
+
 
         </el-form>
         <template #footer>

@@ -14,7 +14,8 @@ import {useUserStore} from "@/stores/user";
 const name = ref('')
 const state = reactive({
   tableData: [],
-  form: {}
+  form: {},
+  treeData:[]
 })
 const multipleSelection = ref([])
 
@@ -44,6 +45,7 @@ const confirmDelBatch = () =>{
 const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+const permissionTreeRef = ref()
 
 const load = () => {
   request.get('/role/page', {
@@ -56,6 +58,9 @@ const load = () => {
   }).then(res => {
     state.tableData = res.data.records
     total.value = res.data.total
+  })
+  request.get('/permission/tree').then(res =>{
+    state.treeData = res.data
   })
 }
 load()//调用load方法拿到数据
@@ -95,21 +100,34 @@ const rules = reactive({
 
   name: [
     { required: true, message: '请输入名称', trigger: 'blur' },
+  ],
+  flag: [
+    { required: true, message: '请输入唯一标识', trigger: 'blur' },
   ]
 })
-//保存
+// 保存
 const save = () => {
-  ruleFormRef.value.validate(valid => {
-    if (valid) {//valid就是检验的结果
+  ruleFormRef.value.validate(valid => {   // valid就是校验的结果
+    if (valid) {
+      // 目前被选中的菜单节点
+      let checkedKeys = permissionTreeRef.value.getCheckedKeys();
+      // 半选中的菜单节点
+      let halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys();
+      checkedKeys.unshift.apply(checkedKeys, halfCheckedKeys);
+      state.form.permissionIds = checkedKeys
+
       request.request({
         url: '/role',
-        method: state.form.id ? 'put' : 'post',//根据id进行判断请求哪个接口
+        method: state.form.id ? 'put' : 'post',
         data: state.form
       }).then(res => {
         if (res.code === '200') {
-          ElMessage.success("操作成功")
+          ElMessage.success('保存成功')
           dialogFormVisible.value = false
-          load() //刷新表格数据
+          load()  // 刷新表格数据
+          if (state.form.flag === 'ADMIN') {
+            logout()
+          }
         } else {
           ElMessage.error(res.msg)
         }
@@ -119,13 +137,16 @@ const save = () => {
 }
 //编辑
 const handleEdit = (raw) => {
-  dialogFormVisible.value=true
+  dialogFormVisible.value = true
   nextTick(() => {
     ruleFormRef.value.resetFields()
-    state.form = JSON.parse(JSON.stringify(raw));
+    state.form = JSON.parse(JSON.stringify(raw))
+
+    permissionTreeRef.value.setCheckedKeys([])  // 初始化，默认不选择任何节点
+    raw.permissionIds.forEach(v => {
+      permissionTreeRef.value.setChecked(v, true, false)  // 给权限树设置选中的节点
+    })
   })
-
-
 }
 //删除
 const del = (id) => {
@@ -267,6 +288,14 @@ const handleImportSuccess = () => {
           </el-form-item>
           <el-form-item prop="flag" label="唯一标识" >
                       <el-input v-model="state.form.flag" autocomplete="off"/>
+          </el-form-item>
+          <el-form-item label="权限" >
+            <div style="width: 100%;border: 1px solid #ccc;border-radius: 5px;padding: 5px">
+              <el-tree default-expand-all node-key = "id"  ref="permissionTreeRef" :data="state.treeData"
+                       :props="{ label:'name',value:'id'}" show-checkbox>
+
+              </el-tree>
+            </div>
           </el-form-item>
 
         </el-form>

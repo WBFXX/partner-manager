@@ -246,7 +246,12 @@ const handleImportSuccess = () => {
         <el-table-column prop="name" label="名称"></el-table-column>
         <el-table-column prop="address" label="地址"></el-table-column>
         <el-table-column prop="email" label="邮箱"></el-table-column>
-        <el-table-column prop="role" label="角色"></el-table-column>
+        <el-table-column prop="role" label="角色">
+          <template #default="scope">
+            <span v-if="roles.length">{{ roles.find(r => r.flag === scope.row.role) ? roles.find(r => r.flag === scope.row.role).name : '' }}</span>
+          </template>
+        </el-table-column>
+
         <el-table-column label="操作" width="180">
           <template #default="scope">
             <el-button type="primary" @click="handleEdit(scope.row)">编辑</el-button>

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import router from "@/router";
+import router, {setRoutes} from "@/router";
 
 export const useUserStore = defineStore('manager', {
     state: () => ({
@@ -17,11 +17,21 @@ export const useUserStore = defineStore('manager', {
         },
         getToken() {
             return this.managerInfo.token || ""
+        },
+        getMenus(){
+            return this.managerInfo.menus || []
+        },
+        getAuths(){
+            return this.managerInfo.auths || []
         }
     },
     actions: {
         setManagerInfo(managerInfo) {
             this.managerInfo = managerInfo
+
+            //设置路由
+            setRoutes(managerInfo.menus)//一定要在push之前添加路由，否则就会出现无路由访问
+
         },
         setUser(user) {
             this.managerInfo.user = JSON.parse(JSON.stringify(user)) //用JSON这个User，跟内存中的user分离，可以避免修改的同步

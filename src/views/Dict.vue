@@ -14,8 +14,7 @@ import {useUserStore} from "@/stores/user";
 const name = ref('')
 const state = reactive({
   tableData: [],
-  form: {},
-  treeData:[]
+  form: {}
 })
 const multipleSelection = ref([])
 
@@ -32,7 +31,7 @@ const confirmDelBatch = () =>{
     return
   }
   const idArr = multipleSelection.value.map(v => v.id)
-  request.post('/role/del/batch',idArr).then(res => {
+  request.post('/dict/del/batch',idArr).then(res => {
     if (res.code === '200') {
       ElMessage.success("操作成功")
       load() //刷新表格数据
@@ -45,13 +44,9 @@ const confirmDelBatch = () =>{
 const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
-const permissionTreeRef = ref()
-const userStore = useUserStore()
-const token = userStore.getBearerToken
-const user = userStore.getUser
 
 const load = () => {
-  request.get('/role/page', {
+  request.get('/dict/page', {
     params: {
       name: name.value,
       pageNum: pageNum.value,
@@ -62,9 +57,6 @@ const load = () => {
     state.tableData = res.data.records
     total.value = res.data.total
   })
-  request.get('/permission/tree').then(res =>{
-    state.treeData = res.data
-  })
 }
 load()//调用load方法拿到数据
 
@@ -74,63 +66,48 @@ const reset = () => {
 
 }
 
-const currentChange = (num) => {
-  pageNum.value = num
-  load()
-}
-const sizeChange = (size) => {
-  pageSize.value = size
-  load()
-}
+// const currentChange = (num) => {
+//   pageNum.value = num
+//   load()
+// }
+// const sizeChange = (size) => {
+//   pageSize.value = size
+//   load()
+// }
 
 const dialogFormVisible = ref(false)
 
 
 
 const ruleFormRef = ref()
-
 //新增
 const handleAdd = () => {
   dialogFormVisible.value = true
   nextTick(() => {
-    ruleFormRef.value.resetFields()
-    state.form = {}
-  })
+      ruleFormRef.value.resetFields()
+      state.form = {}
 
-
+    })
 }
 const rules = reactive({
 
   name: [
     { required: true, message: '请输入名称', trigger: 'blur' },
-  ],
-  flag: [
-    { required: true, message: '请输入唯一标识', trigger: 'blur' },
   ]
 })
-// 保存
+//保存
 const save = () => {
-  ruleFormRef.value.validate(valid => {   // valid就是校验的结果
-    if (valid) {
-      // 目前被选中的菜单节点
-      let checkedKeys = permissionTreeRef.value.getCheckedKeys();
-      // 半选中的菜单节点
-      let halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys();
-      checkedKeys.unshift.apply(checkedKeys, halfCheckedKeys);
-      state.form.permissionIds = checkedKeys
-
+  ruleFormRef.value.validate(valid => {
+    if (valid) {//valid就是检验的结果
       request.request({
-        url: '/role',
-        method: state.form.id ? 'put' : 'post',
+        url: '/dict',
+        method: state.form.id ? 'put' : 'post',//根据id进行判断请求哪个接口
         data: state.form
       }).then(res => {
         if (res.code === '200') {
-          ElMessage.success('保存成功')
+          ElMessage.success("操作成功")
           dialogFormVisible.value = false
-          load()  // 刷新表格数据
-          if (state.form.flag === 'ADMIN') {
-            logout()
-          }
+          load() //刷新表格数据
         } else {
           ElMessage.error(res.msg)
         }
@@ -140,20 +117,17 @@ const save = () => {
 }
 //编辑
 const handleEdit = (raw) => {
-  dialogFormVisible.value = true
+  dialogFormVisible.value=true
   nextTick(() => {
     ruleFormRef.value.resetFields()
-    state.form = JSON.parse(JSON.stringify(raw))
-
-    permissionTreeRef.value.setCheckedKeys([])  // 初始化，默认不选择任何节点
-    raw.permissionIds.forEach(v => {
-      permissionTreeRef.value.setChecked(v, true, false)  // 给权限树设置选中的节点
-    })
+    state.form = JSON.parse(JSON.stringify(raw));
   })
+
+
 }
 //删除
 const del = (id) => {
-  request.delete('/role/'+ id).then(res => {
+  request.delete('/dict/'+ id).then(res => {
         if (res.code === '200') {
           ElMessage.success("操作成功")
           load() //刷新表格数据
@@ -165,11 +139,12 @@ const del = (id) => {
 }
 // 导出
 const exportData = () => {
-  window.open(`http://${config.serverUrl}/role/export`)
+  window.open(`http://${config.serverUrl}/dict/export`)
 }
 
 
-
+const userStore = useUserStore()
+const token = userStore.getBearerToken
 
 const handleImportSuccess = () => {
   //刷新表格
@@ -177,15 +152,6 @@ const handleImportSuccess = () => {
   ElMessage.success("导入成功")
 }
 
-const logout = () => {
-  request.get('/logout/' + user.uid).then(res => {
-    if (res.code === '200') {
-      userStore.logout()
-    } else {
-      ElMessage.error(res.msg)
-    }
-  })
-}
 </script>
 
 <template>
@@ -218,7 +184,7 @@ const logout = () => {
       <el-upload
           :show-file-list="false"
           style="display: inline-block;position: relative;top: 3px;margin: 5px"
-          :action='`http://${config.serverUrl}/role/import`'
+          :action='`http://${config.serverUrl}/dict/import`'
           :on-success="handleImportSuccess"
           :headers="{ Authorization: token }"
       >
@@ -257,8 +223,15 @@ const logout = () => {
         <el-table-column type="selection" width="55"/>
 
             <el-table-column prop="id" label="编号"></el-table-column>
-            <el-table-column prop="name" label="名称"></el-table-column>
-            <el-table-column prop="flag" label="唯一标识"></el-table-column>
+            <el-table-column prop="code" label="编码"></el-table-column>
+            <el-table-column prop="value" label="内容">
+              <template #default="scope">
+                <el-icon>
+                  <component :is="scope.row.value" />
+                </el-icon>
+              </template>
+            </el-table-column>
+            <el-table-column prop="type" label="类型"></el-table-column>
 
 
         <el-table-column label="操作" width="180">
@@ -277,8 +250,8 @@ const logout = () => {
     <!--分页-->
     <div style="margin: 10px 0">
       <el-pagination
-          @current-change="currentChange"
-          @size-change="sizeChange"
+          @current-change="load"
+          @size-change="load"
           v-model:current-page="pageNum"
           v-model:page-size="pageSize"
           small
@@ -294,19 +267,18 @@ const logout = () => {
                  ref="ruleFormRef"
                  :rules="rules" status-icon>
 
-          <el-form-item prop="name" label="名称" >
-                      <el-input v-model="state.form.name" autocomplete="off"/>
+          <el-form-item prop="code" label="编码" >
+                      <el-input v-model="state.form.code" autocomplete="off"/>
           </el-form-item>
-          <el-form-item prop="flag" label="唯一标识" >
-                      <el-input v-model="state.form.flag" autocomplete="off"/>
+          <el-form-item prop="value" label="内容" >
+                      <el-input v-model="state.form.value" autocomplete="off"/>
           </el-form-item>
-          <el-form-item label="权限" >
-            <div style="width: 100%;border: 1px solid #ccc;border-radius: 5px;padding: 5px">
-              <el-tree default-expand-all node-key = "id"  ref="permissionTreeRef" :data="state.treeData"
-                       :props="{ label:'name',value:'id'}" show-checkbox>
+          <el-form-item prop="type" label="类型" >
+            <el-select v-model="state.form.type" style="width: 100%">
+              <el-option v-for="item in ['icon']" :key="item" :value="item">
 
-              </el-tree>
-            </div>
+              </el-option>
+            </el-select>
           </el-form-item>
 
         </el-form>

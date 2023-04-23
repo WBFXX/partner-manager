@@ -1,9 +1,5 @@
 <script setup>
-import {
-  Search,
-  RefreshLeft,
-  Plus, Bottom, Top, Remove
-} from '@element-plus/icons-vue'
+
 import {nextTick, reactive, ref} from "vue";
 import request from "@/utils/request";
 
@@ -58,14 +54,7 @@ load()//调用load方法拿到数据
 //
 // }
 
-const currentChange = (num) => {
-  pageNum.value = num
-  load()
-}
-const sizeChange = (size) => {
-  pageSize.value = size
-  load()
-}
+
 
 const dialogFormVisible = ref(false)
 
@@ -108,6 +97,9 @@ const save = () => {
     }
   })
 }
+
+const icons = ref([])
+
 //编辑
 const handleEdit = (raw) => {
   dialogFormVisible.value = true
@@ -115,6 +107,10 @@ const handleEdit = (raw) => {
     ruleFormRef.value.resetFields()
     state.form = JSON.parse(JSON.stringify(raw));
     // getTreeArr(raw)
+    //请求了icon的数据集合
+    request.get('/dict/icons'  ).then(res => {
+      icons.value = res.data
+    })
   })
 }
 // const getTreeArr = (raw) => {
@@ -141,10 +137,6 @@ const del = (id) => {
       }
   )
 }
-// 导出
-const exportData = () => {
-  window.open(`http://${config.serverUrl}/permission/export`)
-}
 
 
 const userStore = useUserStore()
@@ -158,7 +150,6 @@ const handleImportSuccess = () => {
 
 //权限树状数据
 const options = ref([])
-const icons = ref([])
 
 const handleNodeClick = (data) => {
 
@@ -217,29 +208,7 @@ const changeHide = (row) => {
         </el-icon>
         <span style="vertical-align: middle">新增</span>
       </el-button>
-      <el-upload
-          :show-file-list="false"
-          style="display: inline-block;position: relative;top: 3px;margin: 5px"
-          :action='`http://${config.serverUrl}/permission/import`'
-          :on-success="handleImportSuccess"
-          :headers="{ Authorization: token }"
-      >
-        <el-button type="primary"  >
-          <el-icon>
-            <Bottom/>
-          </el-icon>
-          <span style="vertical-align: middle">导入</span>
-        </el-button>
-      </el-upload>
 
-
-
-      <el-button type="primary"  @click="exportData">
-        <el-icon>
-          <Top/>
-        </el-icon>
-        <span style="vertical-align: middle">导出</span>
-      </el-button>
 
       <el-popconfirm title="是否确认删除?" @confirm="confirmDelBatch">
         <template #reference>
@@ -263,7 +232,13 @@ const changeHide = (row) => {
             <el-table-column prop="path" label="访问路径" ></el-table-column>
             <el-table-column prop="page" label="页面路径"></el-table-column>
             <el-table-column prop="orders" label="顺序"></el-table-column>
-            <el-table-column prop="icon" label="图标"></el-table-column>
+            <el-table-column prop="icon" label="图标">
+              <template #default="scope">
+                <el-icon>
+                  <component :is="scope.row.icon" />
+                </el-icon>
+              </template>
+            </el-table-column>
             <el-table-column prop="auth" label="权限"></el-table-column>
             <el-table-column prop="pid" label="父级"></el-table-column>
             <el-table-column prop="auth" label="类型">
@@ -323,14 +298,21 @@ const changeHide = (row) => {
                       <el-input-number v-model="state.form.orders" :min="1"  />
           </el-form-item>
           <el-form-item prop="icon" label="图标" v-if="state.form.type === 1 || state.form.type === 2">
+
             <el-select v-model="state.form.icon"  placeholder="请选择" style="width: 100%">
               <el-option
-                  v-for="item in options"
-                  :key="item"
-                  :label="item"
-                  :value="item"
-              />
+                  v-for="item in icons"
+                  :key="item.id"
+                  :label="item.code"
+                  :value="item.value">
+                <el-icon>
+                  <component :is="item.value"></component>
+                </el-icon>
+                <span style="font-size: 14px;margin-left: 5px;top: -3px">{{item.code }}</span>
+              </el-option>
+
             </el-select>
+
           </el-form-item>
 
           <el-form-item prop="auth" label="权限" v-if="state.form.type === 3 || state.form.type === 2">

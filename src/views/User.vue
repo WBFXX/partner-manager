@@ -89,6 +89,7 @@ const dialogFormVisible = ref(false)
 
 
 const ruleFormRef = ref()
+//新增
 const handleAdd = () => {
   dialogFormVisible.value = true
   nextTick(() => {
@@ -164,6 +165,7 @@ const exportData = () => {
 
 const userStore = useUserStore()
 const token = userStore.getBearerToken
+const auths = userStore.getAuths
 
 const handleImportSuccess = () => {
   //刷新表格
@@ -197,7 +199,7 @@ const handleImportSuccess = () => {
     </div>
 
     <div style="margin: 10px 0">
-      <el-button type="success" @click="handleAdd">
+      <el-button type="success" @click="handleAdd" v-if="auths.includes('user.add')">
         <el-icon>
           <Plus/>
         </el-icon>
@@ -210,7 +212,7 @@ const handleImportSuccess = () => {
           :on-success="handleImportSuccess"
           :headers="{ Authorization: token }"
       >
-        <el-button type="primary">
+        <el-button type="primary" v-if="auths.includes('user.import')">
           <el-icon>
             <Bottom/>
           </el-icon>
@@ -219,7 +221,7 @@ const handleImportSuccess = () => {
       </el-upload>
 
 
-      <el-button type="primary" @click="exportData">
+      <el-button type="primary" @click="exportData" v-if="auths.includes('user.export')">
         <el-icon>
           <Top/>
         </el-icon>
@@ -228,7 +230,7 @@ const handleImportSuccess = () => {
 
       <el-popconfirm title="是否确认删除?" @confirm="confirmDelBatch">
         <template #reference>
-          <el-button type="danger" style="margin-left: 5px">
+          <el-button type="danger" style="margin-left: 5px" v-if="auths.includes('user.deleteBatch')">
             <el-icon>
               <Remove/>
             </el-icon>
@@ -254,10 +256,10 @@ const handleImportSuccess = () => {
 
         <el-table-column label="操作" width="180">
           <template #default="scope">
-            <el-button type="primary" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button type="primary" @click="handleEdit(scope.row)" v-if="auths.includes('user.edit')">编辑</el-button>
             <el-popconfirm title="是否确认删除?" @confirm="del(scope.row.id)">
               <template #reference>
-                <el-button type="danger">删除</el-button>
+                <el-button type="danger" v-if="auths.includes('user.delete')">删除</el-button>
               </template>
             </el-popconfirm>
           </template>

@@ -22,7 +22,7 @@ export const useUserStore = defineStore('manager', {
             return this.managerInfo.menus || []
         },
         getAuths(){
-            return this.managerInfo.auths || []
+            return this.managerInfo.auths.length ? this.managerInfo.auths.map(v => v.auth) : []
         }
     },
     actions: {

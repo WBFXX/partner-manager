@@ -1,6 +1,6 @@
 <script setup>
 
-import {reactive, ref} from "vue";
+import {nextTick, onMounted, onUnmounted, reactive, ref} from "vue";
 import request from "@/utils/request";
 import {ElMessage} from "element-plus";
 import {useUserStore} from "@/stores/user";
@@ -30,6 +30,7 @@ const login = () => {
               const userStore = useUserStore()
               userStore.setManagerInfo(res.data)
               router.push('/')
+
             } else {
               ElMessage.error(res.msg)
             }
@@ -39,7 +40,18 @@ const login = () => {
   )
 }
 
-
+onMounted(() => {
+  window.addEventListener('keydown', keyDown)
+})
+const keyDown = (e) => {
+  //如果是回车则执行登录方法
+  if (e.keyCode === 13) {
+    login()
+  }
+}
+onUnmounted(() => {
+  window.removeEventListener('keydown', keyDown, false)
+})
 </script>
 
 
@@ -60,10 +72,10 @@ const login = () => {
           <el-input v-model="loginData.username" placeholder="请输入账号" :prefix-icon="User"/>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="loginData.password" placeholder="请输入密码" :prefix-icon="Lock"/>
+          <el-input type="password" v-model="loginData.password" placeholder="请输入密码" :prefix-icon="Lock"/>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" style="width: 100%" @click="login"> 登 录</el-button>
+          <el-button type="primary" style="width: 100%" @keydown.enter="keyDown" @click="login"> 登 录</el-button>
         </el-form-item>
 
       </el-form>

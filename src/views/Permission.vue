@@ -245,7 +245,7 @@ const changeHide = (row) => {
               <template #default="scope">
                 <el-tag type="warning" v-if="scope.row.type === 1"> 菜单目录 </el-tag>
                 <el-tag type="primary" v-if="scope.row.type === 2"> 菜单页面 </el-tag>
-                <el-tag type="success" v-if="scope.row.type === 3"> 菜单按钮 </el-tag>
+                <el-tag type="success" v-if="scope.row.type === 3"> 页面按钮 </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="auth" label="隐藏">
@@ -282,7 +282,7 @@ const changeHide = (row) => {
             <el-radio-group v-model="state.form.type">
               <el-radio :label="1">菜单目录</el-radio>
               <el-radio :label="2">菜单页面</el-radio>
-              <el-radio :label="3">菜单按钮</el-radio>
+              <el-radio :label="3">页面按钮</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item prop="name" label="名称" >

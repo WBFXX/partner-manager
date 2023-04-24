@@ -13,6 +13,7 @@ const logout = () => {
     if (res.code === '200') {
       userStore.logout()
       ElMessage.success("成功退出登录")
+      location.reload()
     } else {
       ElMessage.error(res.msg)
     }

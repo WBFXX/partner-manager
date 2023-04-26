@@ -75,3 +75,9 @@ body {
 th{
   background-color: aliceblue !important;
 }
+.ml5{
+  margin-left: 5px;
+}
+.w300{
+  width: 300px;
+}

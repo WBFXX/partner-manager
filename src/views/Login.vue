@@ -39,7 +39,7 @@ const login = () => {
       }
   )
 }
-
+//回车登录
 onMounted(() => {
   window.addEventListener('keydown', keyDown)
 })
@@ -75,7 +75,7 @@ onUnmounted(() => {
           <el-input type="password" v-model="loginData.password" placeholder="请输入密码" :prefix-icon="Lock"/>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" style="width: 100%" @keydown.enter="keyDown" @click="login"> 登 录</el-button>
+          <el-button type="primary" style="width: 100%" @keyup.enter="keyDown" @click="login"> 登 录</el-button>
         </el-form-item>
 
       </el-form>

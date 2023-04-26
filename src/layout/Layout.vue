@@ -43,6 +43,10 @@ const menus = userStore.getMenus
                 <el-dropdown-menu>
                   <el-dropdown-item>
                     <div @click="router.push('/person')">个人信息</div>
+
+                  </el-dropdown-item>
+                  <el-dropdown-item>
+                    <div @click="router.push('/password')">修改密码</div>
                   </el-dropdown-item>
                   <el-dropdown-item>
                     <div @click="logout">退出登录</div>
